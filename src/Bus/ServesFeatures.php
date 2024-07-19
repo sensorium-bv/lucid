@@ -29,10 +29,9 @@ trait ServesFeatures
          * @author Nay Thu Khant (naythukhant644@gmail.com)
          *
          */
-        $method = App::version() >= "10.0.0" ? "dispatchSync" : "dispatch";
 
         event(new FeatureStarted($feature, $arguments));
 
-        return $this->{$method}($this->marshal($feature, new Collection(), $arguments));
+        return $this->dispatchSync($this->marshal($feature, new Collection(), $arguments));
     }
 }

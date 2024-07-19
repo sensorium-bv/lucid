@@ -14,6 +14,7 @@ use Lucid\Events\JobStarted;
 use Illuminate\Support\Collection;
 use Lucid\Events\OperationStarted;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 trait UnitDispatcher
 {
@@ -40,12 +41,19 @@ trait UnitDispatcher
          * @author Nay Thu Khant (naythukhant644@gmail.com)
          *
          */
-        $method = App::version() >= "10.0.0" ? "dispatchSync" : "dispatch";
 
         if (is_object($unit) && !App::runningUnitTests()) {
-            $result = $this->{$method}($unit);
+            if ($unit instanceof ShouldQueue) {
+                $result = $this->dispatch($unit);
+            }else{
+                $result = $this->dispatchSync($unit);
+            }
         } elseif ($arguments instanceof Request) {
-            $result = $this->{$method}($this->marshal($unit, $arguments, $extra));
+            if ($unit instanceof ShouldQueue) {
+                $result = $this->dispatch($this->marshal($unit, $arguments, $extra));
+            }else{
+                $result = $this->dispatchSync($this->marshal($unit, $arguments, $extra));
+            }
         } else {
             if (!is_object($unit)) {
                 $unit = $this->marshal($unit, new Collection(), $arguments);
@@ -66,7 +74,11 @@ trait UnitDispatcher
                 );
             }
 
-            $result = $this->{$method}($unit);
+            if ($unit instanceof ShouldQueue) {
+                $result = $this->dispatch($unit);
+            }else{
+                $result = $this->dispatchSync($unit);
+            }
         }
 
         if ($unit instanceof Operation) {
